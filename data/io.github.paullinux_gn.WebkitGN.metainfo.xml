@@ -15,6 +15,7 @@
   <url type="bugtracker">https://github.com/paullinux-gn/Webkit-GN/issues</url>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.28.0" date="2026-11-10"><description><p>Use the GNOME 51 Flatpak runtime and Twinly-compatible GTK 4.24/Wayland native blur requirements, enabling blur on menus and popovers.</p></description></release>
     <release version="0.27.0" date="2026-11-10"><description><p>Delete custom paragraph styles from the styles menu or style editor, with undo and built-in style fallback. Keep style menus accurate after undoing style changes.</p></description></release>
     <release version="0.26.1" date="2026-11-10"><description><p>Fix blur-backdrop alignment with GTK controls at different WebKit scales, including the Flatpak runtime.</p></description></release>
     <release version="0.26.0" date="2026-11-10" />

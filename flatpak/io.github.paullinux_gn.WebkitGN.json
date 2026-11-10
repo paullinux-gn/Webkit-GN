@@ -1,7 +1,7 @@
 {
   "app-id": "io.github.paullinux_gn.WebkitGN",
   "runtime": "org.gnome.Platform",
-  "runtime-version": "49",
+  "runtime-version": "51",
   "sdk": "org.gnome.Sdk",
   "command": "webkit-gn",
   "default-branch": "stable",
@@ -79,7 +79,8 @@
         "install -Dm644 LICENSE /app/share/licenses/io.github.paullinux_gn.WebkitGN/LICENSE",
         "test -x /app/bin/pdfinfo && test -x /app/bin/pdftoppm",
         "python3 -c 'import gi; gi.require_version(\"Gtk\", \"4.0\"); gi.require_version(\"Adw\", \"1\"); gi.require_version(\"WebKit\", \"6.0\"); from gi.repository import Gtk, Adw, WebKit'",
-        "/app/bin/pdftoppm -h 2>&1 | grep -q -- '-png'"
+        "/app/bin/pdftoppm -h 2>&1 | grep -q -- '-png'",
+        "python3 -c 'import gi; gi.require_version(\"Gtk\", \"4.0\"); from gi.repository import Gtk; assert (Gtk.get_major_version(), Gtk.get_minor_version()) >= (4, 24), \"Native menu blur requires GTK 4.24+\"; errors=[]; provider=Gtk.CssProvider(); provider.connect(\"parsing-error\", lambda *args: errors.append(True)); provider.load_from_string(\".probe { backdrop-filter: blur(14px); }\"); assert not errors, \"GTK must support native backdrop blur\"'"
       ],
       "sources": [
         {

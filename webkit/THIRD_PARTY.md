@@ -35,3 +35,5 @@ The application icon and symbolic variant are unmodified Adwaita `x-office-docum
 ## Flatpak PDF preview tools
 
 Flatpak builds include Poppler 26.07.0 (`pdfinfo`, `pdftoppm` and their supporting library). The pinned source archive and SHA-256 are recorded in `flatpak/io.github.paullinux_gn.WebkitGN.json`, using the Debian source mirror. Poppler's copyright/licence notices are retained in `data/poppler-licenses/` and installed with the app. This dependency is only built for Flatpak; desktop runs use their distribution's Poppler utilities.
+
+Native blur runtime/session requirements follow Twinly `preferences.py` at revision `e08319fe4557a6dcd44afc67a375e48db8dde627` (https://github.com/paullinux-gn/twinly/blob/e08319fe4557a6dcd44afc67a375e48db8dde627/preferences.py). Twinly's GPL-3.0-or-later notice above applies.

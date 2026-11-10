@@ -68,10 +68,10 @@ sudo pacman -S --needed flatpak flatpak-builder
 ./scripts/build-flatpak.sh
 ```
 
-This adds the Flathub remote for your user, downloads the GNOME 49 SDK/runtime,
+This adds the Flathub remote for your user, downloads the GNOME 51 SDK/runtime,
 builds the pinned PDF-preview utilities and creates **`dist/Webkit-GN.flatpak`**.
 The first build downloads a substantial SDK; subsequent builds reuse its cache.
-The host desktop does not need to run GNOME 49. No Node or Rust build is needed:
+The host desktop does not need to run GNOME 51 for ordinary editing. Native blur requires GNOME 51+ on Wayland. No Node or Rust build is needed:
 the manifest installs the checked-in production JavaScript bundle.
 
 Install and launch:
@@ -134,3 +134,5 @@ The app icon is GNOME's Adwaita document icon, credited to the
 Flatpak packaging checks validate matching application IDs, the desktop entry and document-portal save behaviour. A full SDK/runtime build requires Flathub access; the GitHub Flatpak workflow performs that build and uploads the resulting bundle.
 
 Blur geometry is calibrated between GTK widget coordinates and the actual WebKit viewport, including page scale and scrollbar gutters. Version 0.26.1 fixes displaced toolbar backgrounds observed in Flatpak. Native regression tests check toolbar, search and outline backdrops at 100%, 110%, 125% and 150% WebKit zoom, without changing document zoom or dirty state.
+
+Native blur follows Twinly's GTK 4.24+/Wayland capability check. The Flatpak now uses GNOME Platform/SDK 51 so popovers, context menus, dropdowns and the hamburger menu can use GTK backdrop blur with the selected tint and radius. On older GTK or X11, the existing document/toolbar blur fallback remains available; menus remain solid. Blur off always restores solid menu backgrounds.

@@ -49,3 +49,13 @@ class AppearanceTests(unittest.TestCase):
             store.save({**migrated,"theme":"light","blur":True})
             self.assertEqual(store.load()["theme"],"light")
             self.assertTrue(store.load()["blur"])
+
+    def test_native_blur_surfaces_follow_opacity_and_radius(self):
+        from ui_surfaces import surface_css
+        for dark,rgb in ((False,"250,250,252"),(True,"37,39,45")):
+            css=surface_css(dark,.65,True,23,True)
+            self.assertIn(f"@define-color wp_surface rgba({rgb},0.65);",css)
+            self.assertIn("backdrop-filter:blur(23px)",css)
+            fallback=surface_css(dark,.65,False,23,True)
+            self.assertIn(f"@define-color wp_surface rgba({rgb},1);",fallback)
+            self.assertNotIn("backdrop-filter:",fallback)

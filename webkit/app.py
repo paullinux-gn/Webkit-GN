@@ -91,7 +91,7 @@ class Editor(Adw.ApplicationWindow):
         header = Adw.HeaderBar(valign=Gtk.Align.START)
         self.header=header
         header.add_css_class("editor-header")
-        self.heading = Adw.WindowTitle(title="Untitled", subtitle="Prototype 0.27 · 125% view")
+        self.heading = Adw.WindowTitle(title="Untitled", subtitle="Prototype 0.28 · 125% view")
         header.set_title_widget(self.heading)
         self.file_actions={}
         files=Gio.Menu()
@@ -171,11 +171,13 @@ class Editor(Adw.ApplicationWindow):
         for window in Gtk.Window.get_toplevels():visit(window)
         return False
 
-    @staticmethod
-    def detect_native_blur():
+    def detect_native_blur(self):
+        # Same native-blur requirements as Twinly: GTK 4.24+ on Wayland.
+        if (Gtk.get_major_version(),Gtk.get_minor_version())<(4,24):return False
+        if 'Wayland' not in type(self.get_display()).__name__:return False
         probe=Gtk.CssProvider();errors=[]
         probe.connect("parsing-error",lambda _,section,error:errors.append(error))
-        probe.load_from_data(b".blur-probe { backdrop-filter: blur(1px); }")
+        probe.load_from_string(".blur-probe { backdrop-filter: blur(1px); }")
         return not errors
 
     def track_glass(self,*_):
@@ -304,7 +306,8 @@ class Editor(Adw.ApplicationWindow):
             self.theme_buttons[key]=circle
         group.add(choices);page.add(group)
         glass=Adw.PreferencesGroup(title="Translucency")
-        self.blur_switch=Adw.SwitchRow(title="Blur",subtitle="Soften the document behind the headerbar and toolbar",active=self.appearance["blur"])
+        self.blur_switch=Adw.SwitchRow(title="Blur",subtitle="Headerbar, toolbar and menus" if self.native_blur else
+            "Headerbar and toolbar; native menu blur requires GNOME 51+ on Wayland",active=self.appearance["blur"])
         glass.add(self.blur_switch)
         self.opacity_slider=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,0,100,1)
         self.opacity_slider.set_value(self.appearance["opacity"]*100);self.opacity_slider.set_digits(0)
