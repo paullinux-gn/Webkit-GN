@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.paullinux_gn.WebkitGN</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Webkit-GN</name>
+  <summary>Write and format documents on the GNOME desktop</summary>
+  <description>
+    <p>Webkit-GN is a native word processor for GNOME, with a floating formatting toolbar and a clean writing surface. Open and save self-contained HTML documents.</p>
+    <p>Format headings and paragraphs, work with tables, pictures and text boxes, arrange column sections, find and replace text, and print with a paginated PDF preview.</p>
+  </description>
+  <developer id="io.github.paullinux-gn"><name>Paullinux</name></developer>
+  <launchable type="desktop-id">io.github.paullinux_gn.WebkitGN.desktop</launchable>
+  <url type="homepage">https://github.com/paullinux-gn/Webkit-GN</url>
+  <url type="bugtracker">https://github.com/paullinux-gn/Webkit-GN/issues</url>
+  <content_rating type="oars-1.1" />
+  <releases><release version="0.26.0" date="2026-11-10" /></releases>
+</component>

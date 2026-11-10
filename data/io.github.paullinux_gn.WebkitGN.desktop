@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Webkit-GN
+Comment=Write and format documents
+Exec=webkit-gn
+Icon=io.github.paullinux_gn.WebkitGN
+Terminal=false
+Categories=Office;WordProcessor;GTK;
+Keywords=Document;Text;Writing;HTML;
+StartupNotify=true
+StartupWMClass=io.github.paullinux_gn.WebkitGN

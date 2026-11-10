@@ -1,0 +1,104 @@
+{
+  "app-id": "io.github.paullinux_gn.WebkitGN",
+  "runtime": "org.gnome.Platform",
+  "runtime-version": "49",
+  "sdk": "org.gnome.Sdk",
+  "command": "webkit-gn",
+  "default-branch": "stable",
+  "finish-args": [
+    "--share=ipc",
+    "--socket=wayland",
+    "--socket=fallback-x11",
+    "--device=dri",
+    "--socket=cups"
+  ],
+  "modules": [
+    {
+      "name": "poppler-preview",
+      "buildsystem": "cmake-ninja",
+      "config-opts": [
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DENABLE_UTILS=ON",
+        "-DENABLE_CPP=OFF",
+        "-DENABLE_GLIB=OFF",
+        "-DENABLE_QT5=OFF",
+        "-DENABLE_QT6=OFF",
+        "-DENABLE_GOBJECT_INTROSPECTION=OFF",
+        "-DENABLE_LIBCURL=OFF",
+        "-DENABLE_NSS3=OFF",
+        "-DENABLE_GPGME=OFF",
+        "-DENABLE_LIBTIFF=OFF",
+        "-DENABLE_LIBOPENJPEG=OFF",
+        "-DENABLE_BOOST=OFF",
+        "-DBUILD_GTK_TESTS=OFF",
+        "-DBUILD_QT5_TESTS=OFF",
+        "-DBUILD_QT6_TESTS=OFF",
+        "-DBUILD_CPP_TESTS=OFF",
+        "-DBUILD_MANUAL_TESTS=OFF",
+        "-DCMAKE_REQUIRE_FIND_PACKAGE_PNG=TRUE"
+      ],
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://deb.debian.org/debian/pool/main/p/poppler/poppler_26.07.0.orig.tar.xz",
+          "sha256": "304832f48f8a47fdca90c6b6d1f684e68f37c10c9a0726f345f4ca9df4ca01e2"
+        }
+      ],
+      "cleanup": [
+        "/include",
+        "/lib/pkgconfig",
+        "/share/man",
+        "/share/doc",
+        "/bin/pdfattach",
+        "/bin/pdfdetach",
+        "/bin/pdffonts",
+        "/bin/pdfimages",
+        "/bin/pdfseparate",
+        "/bin/pdftocairo",
+        "/bin/pdftohtml",
+        "/bin/pdftops",
+        "/bin/pdftotext",
+        "/bin/pdfunite"
+      ]
+    },
+    {
+      "name": "webkit-gn",
+      "buildsystem": "simple",
+      "build-commands": [
+        "install -d /app/share/webkit-gn/webkit",
+        "install -m644 webkit/*.py webkit/editor.html webkit/editor.bundle.js webkit/THIRD_PARTY.md /app/share/webkit-gn/webkit/",
+        "cp -r webkit/icons webkit/licenses /app/share/webkit-gn/webkit/",
+        "cp -r webkit/src /app/share/webkit-gn/webkit/",
+        "install -m644 webkit/package.json webkit/package-lock.json /app/share/webkit-gn/webkit/",
+        "cp -r data /app/share/webkit-gn/",
+        "install -Dm755 flatpak/webkit-gn /app/bin/webkit-gn",
+        "install -Dm644 data/io.github.paullinux_gn.WebkitGN.desktop /app/share/applications/io.github.paullinux_gn.WebkitGN.desktop",
+        "install -Dm644 data/io.github.paullinux_gn.WebkitGN.metainfo.xml /app/share/metainfo/io.github.paullinux_gn.WebkitGN.metainfo.xml",
+        "install -Dm644 data/icons/hicolor/scalable/apps/io.github.paullinux_gn.WebkitGN.svg /app/share/icons/hicolor/scalable/apps/io.github.paullinux_gn.WebkitGN.svg",
+        "install -Dm644 data/icons/hicolor/symbolic/apps/io.github.paullinux_gn.WebkitGN-symbolic.svg /app/share/icons/hicolor/symbolic/apps/io.github.paullinux_gn.WebkitGN-symbolic.svg",
+        "install -Dm644 LICENSE /app/share/licenses/io.github.paullinux_gn.WebkitGN/LICENSE",
+        "test -x /app/bin/pdfinfo && test -x /app/bin/pdftoppm",
+        "python3 -c 'import gi; gi.require_version(\"Gtk\", \"4.0\"); gi.require_version(\"Adw\", \"1\"); gi.require_version(\"WebKit\", \"6.0\"); from gi.repository import Gtk, Adw, WebKit'",
+        "/app/bin/pdftoppm -h 2>&1 | grep -q -- '-png'"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "..",
+          "skip": [
+            ".git",
+            ".runtime",
+            "target",
+            "webkit/node_modules",
+            "webkit/__pycache__",
+            "webkit/tests",
+            "dist",
+            ".flatpak-builder",
+            ".flatpak-build",
+            ".flatpak-repo"
+          ]
+        }
+      ]
+    }
+  ]
+}

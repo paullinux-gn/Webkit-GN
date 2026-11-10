@@ -85,6 +85,14 @@ def write_html(path, content):
     path = Path(path)
     if path.suffix.lower() not in (".html", ".htm"):
         raise ValueError("Save this document with an .html extension.")
+    # A document-portal grant covers the selected file, not sibling temporary
+    # files or renames. Write that exported file directly; normal paths retain
+    # the existing atomic-save behaviour.
+    portal_root=Path(os.environ.get("XDG_RUNTIME_DIR",f"/run/user/{os.getuid()}"))/"doc"
+    if os.environ.get("FLATPAK_ID") and Path(os.path.abspath(path)).is_relative_to(Path(os.path.abspath(portal_root))):
+        with path.open("w",encoding="utf-8") as file:
+            file.write(content);file.flush();os.fsync(file.fileno())
+        return
     temporary = None
     try:
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent, prefix="."+path.name+".", delete=False) as file:

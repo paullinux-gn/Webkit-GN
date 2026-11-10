@@ -31,3 +31,7 @@ icon names as Twinly and are supplied by the installed desktop icon theme.
 Additional controls without a Twinly counterpart retain local symbolic SVGs.
 
 The application icon and symbolic variant are unmodified Adwaita `x-office-document` icons by the GNOME Project (https://www.gnome.org), from https://download.gnome.org/sources/adwaita-icon-theme/. Distributed under the applicable attribution/share-alike terms retained in `../data/ADWAITA-LICENSE.txt`.
+
+## Flatpak PDF preview tools
+
+Flatpak builds include Poppler 26.07.0 (`pdfinfo`, `pdftoppm` and their supporting library). The pinned source archive and SHA-256 are recorded in `flatpak/io.github.paullinux_gn.WebkitGN.json`, using the Debian source mirror. Poppler's copyright/licence notices are retained in `data/poppler-licenses/` and installed with the app. This dependency is only built for Flatpak; desktop runs use their distribution's Poppler utilities.

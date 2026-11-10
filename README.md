@@ -56,6 +56,40 @@ a print-only column layout to work around WebKit's CSS-column printing behaviour
 Double-click a picture to open its size controls; click it once for drag handles.
 Use a table's properties handle or the toolbar table button to edit/delete it.
 
+## Build a Flatpak
+
+On CachyOS / Arch:
+
+```sh
+sudo pacman -S --needed flatpak flatpak-builder
+./scripts/build-flatpak.sh
+```
+
+This adds the Flathub remote for your user, downloads the GNOME 49 SDK/runtime,
+builds the pinned PDF-preview utilities and creates **`dist/Webkit-GN.flatpak`**.
+The first build downloads a substantial SDK; subsequent builds reuse its cache.
+The host desktop does not need to run GNOME 49. No Node or Rust build is needed:
+the manifest installs the checked-in production JavaScript bundle.
+
+Install and launch:
+
+```sh
+flatpak install --user dist/Webkit-GN.flatpak
+flatpak run io.github.paullinux_gn.WebkitGN
+```
+
+`./scripts/build-flatpak.sh --install` builds and installs in one step.
+Alternatively, in GitHub open **Actions → Flatpak bundle → Run workflow**. Download
+`Webkit-GN-flatpak-x86_64` from the completed run's Artifacts and extract the ZIP
+before installing the `.flatpak` file. The workflow also runs after packaging or
+application changes on `main`; it does not submit the app to Flathub.
+
+The sandbox uses native file portals, Wayland/X11, GPU rendering and the CUPS
+socket for printing. It has no blanket home-directory access or network grant.
+Use `.html`/`.htm` when saving in the portal. Embedded images are preserved;
+relative images in neighbouring files may be inaccessible unless separately
+permitted. App settings use Flatpak's private configuration directory.
+
 ## Development and checks
 
 Requires Node.js 22+ and Python 3 for development:
@@ -93,3 +127,5 @@ See [LICENSE](LICENSE) and [dependency notices](webkit/THIRD_PARTY.md).
 The app icon is GNOME's Adwaita document icon, credited to the
 [GNOME Project](https://www.gnome.org). Its licence and attribution are included in
 [data/ADWAITA-LICENSE.txt](data/ADWAITA-LICENSE.txt).
+
+Flatpak packaging checks validate matching application IDs, the desktop entry and document-portal save behaviour. A full SDK/runtime build requires Flathub access; the GitHub Flatpak workflow performs that build and uploads the resulting bundle.

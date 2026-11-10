@@ -1,0 +1,32 @@
+name: Flatpak bundle
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'flatpak/**'
+      - 'data/**'
+      - 'webkit/**'
+      - 'scripts/build-flatpak.sh'
+      - '.github/workflows/flatpak.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # The builder image supplies Flatpak tooling; the manifest selects GNOME 49.
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: flatpak/io.github.paullinux_gn.WebkitGN.json
+          bundle: Webkit-GN.flatpak
+          branch: stable
+          build-dir: .flatpak-build
+          repo-dir: .flatpak-repo
+          build-debug-bundle: false
+          artifact-name: Webkit-GN-flatpak-x86_64

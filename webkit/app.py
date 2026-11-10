@@ -48,6 +48,7 @@ class Editor(Adw.ApplicationWindow):
 
     def __init__(self, app):
         super().__init__(application=app, title="Webkit-GN")
+        self.sandboxed=Path("/.flatpak-info").is_file()
         self.add_css_class("wp-editor")
         Gtk.IconTheme.get_for_display(self.get_display()).add_search_path(str(ROOT.parent/"data/icons"))
         self.set_icon_name("io.github.paullinux_gn.WebkitGN")
@@ -90,7 +91,7 @@ class Editor(Adw.ApplicationWindow):
         header = Adw.HeaderBar(valign=Gtk.Align.START)
         self.header=header
         header.add_css_class("editor-header")
-        self.heading = Adw.WindowTitle(title="Untitled", subtitle="Prototype 0.25 · 125% view")
+        self.heading = Adw.WindowTitle(title="Untitled", subtitle="Prototype 0.26 · 125% view")
         header.set_title_widget(self.heading)
         self.file_actions={}
         files=Gio.Menu()
@@ -523,6 +524,9 @@ class Editor(Adw.ApplicationWindow):
         else:self.guard_discard(lambda:self.choose_file(False))
 
     def styled_file_chooser(self,title,action,accept):
+        if self.sandboxed:
+            return Gtk.FileChooserNative(title=title,transient_for=self,modal=True,
+                action=action,accept_label=accept,cancel_label="Cancel")
         dialog=Gtk.FileChooserDialog(title=title,transient_for=self,modal=True,action=action)
         dialog.add_buttons("Cancel",Gtk.ResponseType.CANCEL,accept,Gtk.ResponseType.ACCEPT)
         dialog.set_default_response(Gtk.ResponseType.ACCEPT)
@@ -540,9 +544,12 @@ class Editor(Adw.ApplicationWindow):
         if saving:dialog.set_current_name(self.path.name if self.path else "Untitled.html")
         def response(chooser,result):
             if result==Gtk.ResponseType.ACCEPT:
-                path=Path(chooser.get_file().get_path())
-                if saving and not path.suffix:path=path.with_suffix(".html")
-                self.save_to(path) if saving else self.open_path(path)
+                selected=chooser.get_file();selected_path=selected.get_path() if selected else None
+                if selected_path:
+                    path=Path(selected_path)
+                    if saving and not path.suffix and not self.sandboxed:path=path.with_suffix(".html")
+                    self.save_to(path) if saving else self.open_path(path)
+                else:self.status.set_label("Choose a locally accessible HTML file.")
             chooser.destroy();self.file_chooser=None
             GLib.idle_add(self.focus_document)
         dialog.connect("response",response);dialog.show()
