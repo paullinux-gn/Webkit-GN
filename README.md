@@ -22,6 +22,9 @@ one-time default-theme migration.
   Optional header/toolbar blur, opacity and intensity controls.
 - Body, Title and H1–H3 styles, custom named styles, font search, font sizes,
   emphasis, sub/superscript, alignment and line spacing (including 0.95).
+  Custom styles have delete icons in the dropdown and a Delete style button in
+  their editor. Affected paragraphs return to the matching built-in style; text,
+  direct formatting, alignment and spacing are retained. Ctrl+Z restores the style.
 - Matching 60-colour text/highlight palettes with consistent hue columns and
   light-to-dark shades. Rounded highlights choose contrasting text automatically.
 - Bulleted, numbered and interactive checklists; links and horizontal rules.

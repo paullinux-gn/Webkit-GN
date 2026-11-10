@@ -563,3 +563,45 @@ test("image resizing preserves image data, supports HTML roundtrip, undo, reset 
     assert.throws(()=>api.exec('resizeImage',{...info,width:100}),/different document/);
   }finally{api.destroy();}
 });
+
+test("deleting custom styles resets all references to their built-in category and undoes atomically",()=>{
+  const api=editor();
+  try{
+    for(const [kind,level,base] of [['Body',0,'Normal'],['Title',1,'Title'],['H1',1,'H1'],['H2',2,'H2'],['H3',3,'H3']]){
+      api.loadHTML('<p data-style="Custom" style="line-height:2;text-align:right">One</p><section data-textbox><p data-style="Custom"><strong>Two</strong></p></section><table><tr><td><p data-style="Custom">Three</p></td></tr></table>');
+      api.exec('defineStyle',{name:'Custom',preset:{kind,level,font:'Serif',size:21,bold:true,italic:false}});
+      const original=api.getState(),text=api.getText();
+      api.exec('deleteStyle',{name:'Custom',documentId:original.documentId});
+      const deleted=api.getState().json,blocks=[];
+      api.view.state.doc.descendants(node=>{if(node.isTextblock)blocks.push(node);});
+      assert.ok(!Object.hasOwn(deleted.attrs.styles,'Custom'));
+      assert.ok(blocks.every(node=>node.attrs.styleName===base));
+      assert.equal(blocks[0].attrs.lineSpacing,2);assert.equal(blocks[0].attrs.align,'right');
+      assert.ok(blocks[1].firstChild.marks.some(mark=>mark.type.name==='strong'));
+      assert.equal(api.getText(),text);
+      assert.deepEqual(parseHTML(api.exportHTML().html).toJSON(),deleted);
+      api.exec('undo');assert.deepEqual(api.getState().json,original.json);
+      api.exec('redo');assert.deepEqual(api.getState().json,deleted);
+      for(const name of ['Normal','Title','H1','H2','H3'])assert.throws(()=>api.exec('deleteStyle',{name}),/Built-in/);
+      assert.throws(()=>api.exec('deleteStyle',{name:'Missing'}),/no longer exists/);
+      assert.throws(()=>api.exec('deleteStyle',{name:'Custom',documentId:original.documentId-1}),/different document/);
+    }
+  }finally{api.destroy();}
+});
+
+test("style edits and deletion never mutate cached notifications or history snapshots",()=>{
+  const mount=document.createElement('div');document.body.append(mount);const states=[];
+  const api=createEditor(mount,state=>states.push(state));
+  try{
+    api.loadHTML('<p>Text</p>');const initial=states.at(-1).styles;
+    api.exec('defineStyle',{name:'Accent',create:true});
+    assert.ok(!Object.hasOwn(initial,'Accent'));
+    const named=states.at(-1).styles;
+    api.exec('defineStyle',{oldName:'Accent',name:'Renamed'});
+    assert.ok(Object.hasOwn(named,'Accent'));assert.ok(!Object.hasOwn(named,'Renamed'));
+    api.exec('undo');assert.ok(Object.hasOwn(states.at(-1).styles,'Accent'));
+    assert.ok(!Object.hasOwn(states.at(-1).styles,'Renamed'));
+    api.exec('deleteStyle',{name:'Accent'});assert.ok(Object.hasOwn(named,'Accent'));
+    api.exec('undo');assert.ok(Object.hasOwn(states.at(-1).styles,'Accent'));
+  }finally{api.destroy();}
+});

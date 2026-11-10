@@ -436,7 +436,7 @@ export function createEditor(mount, notify=()=>{}) {
       dispatch(tr.setStoredMarks(null));success=true;
     } else if(command==="defineStyle") {
       if(!validName(args.name))throw new Error("Use 1–40 letters, numbers, spaces, dashes or underscores for the style name.");
-      const styles=documentStyles(state.doc),parent=state.selection.$from.parent;
+      const styles={...documentStyles(state.doc)},parent=state.selection.$from.parent;
       const inherited=styles[nodeStyle(parent)]||DEFAULT_STYLES.Normal;
       const size=markValue(state,schema.marks.size,"size")||`${inherited.size}pt`;
       const preset={kind:inherited.kind,level:inherited.level,font:markValue(state,schema.marks.font,"family")||inherited.font,
@@ -472,6 +472,20 @@ export function createEditor(mount, notify=()=>{}) {
           tr.removeMark(pos+1,pos+node.nodeSize-1,schema.marks.size);
         });
       }
+      dispatch(tr.setStoredMarks(null));success=true;
+    } else if(command==="deleteStyle") {
+      if(args.documentId!==undefined&&args.documentId!==documentId)throw new Error("This style belongs to a different document.");
+      if(Object.hasOwn(DEFAULT_STYLES,args.name))throw new Error("Built-in styles cannot be deleted.");
+      const styles={...documentStyles(state.doc)},preset=styles[args.name];
+      if(!validName(args.name)||!Object.hasOwn(styles,args.name))throw new Error("The selected style no longer exists.");
+      const fallback=preset.kind==="Body"?"Normal":preset.kind,definition=styles[fallback];
+      delete styles[args.name];
+      const tr=closeHistory(state.tr).setDocAttribute("styles",styles);
+      state.doc.descendants((node,pos)=>{
+        if(node.isTextblock&&nodeStyle(node)===args.name)
+          tr.setNodeMarkup(pos,definition.level?schema.nodes.heading:schema.nodes.paragraph,
+            {...node.attrs,level:definition.level,styleName:fallback});
+      });
       dispatch(tr.setStoredMarks(null));success=true;
     } else if(command==="lineSpacing") {
       const value=bounded(args.value,.95,3,1.5);let tr=state.tr;

@@ -225,7 +225,7 @@ def refresh_styles(editor,styles):
     child=editor.style_rows.get_first_child()
     while child:
         next_child=child.get_next_sibling();editor.style_rows.remove(child);child=next_child
-    editor.style_buttons={}
+    editor.style_buttons={};editor.style_delete_buttons={}
     for heading in (False,True):
         label=Gtk.Label(label="Headings" if heading else "Body",xalign=0)
         label.add_css_class("dim-label");label.set_margin_start(8);editor.style_rows.append(label)
@@ -233,7 +233,16 @@ def refresh_styles(editor,styles):
             if bool(preset["level"])!=heading:continue
             button=Gtk.Button(label=name);button.add_css_class("flat")
             button.connect("clicked",lambda _,style=name:apply_and_close(editor,editor.styles,"style",{"name":style}))
-            editor.style_rows.append(button);editor.style_buttons[name]=button
+            if name in ("Normal","Title","H1","H2","H3"):
+                editor.style_rows.append(button)
+            else:
+                row=Gtk.Box(spacing=2);button.set_hexpand(True);row.append(button)
+                delete=Gtk.Button(icon_name="user-trash-symbolic",tooltip_text="Delete “"+name+"”",focus_on_click=False)
+                delete.add_css_class("flat")
+                delete.update_property([Gtk.AccessibleProperty.LABEL],["Delete style “"+name+"”"])
+                delete.connect("clicked",lambda _,style=name:apply_and_close(editor,editor.styles,"deleteStyle",{"name":style,"documentId":editor.state["documentId"]}))
+                row.append(delete);editor.style_rows.append(row);editor.style_delete_buttons[name]=delete
+            editor.style_buttons[name]=button
     editor.style_rows.append(Gtk.Separator())
     for title,handler in (("Edit current style…",lambda:style_dialog(editor,False)),("New style…",lambda:style_dialog(editor,True))):
         button=Gtk.Button(label=title);button.add_css_class("flat")
@@ -267,6 +276,7 @@ def sync_text_toolbar(editor,state):
 
 def style_dialog(editor,create):
     current=editor.state["format"]["style"]
+    document_id=editor.state["documentId"]
     styles=editor.state["styles"]
     preset=styles.get(current,styles["Normal"])
     types=[("Body",0,"Normal"),("Title",1,"Title"),("H1",1,"H1"),("H2",2,"H2"),("H3",3,"H3")]
@@ -297,6 +307,11 @@ def style_dialog(editor,create):
     grid.attach(bold,0,4,1,1);grid.attach(italic,1,4,1,1)
     validation=Gtk.Label(xalign=0,wrap=True);validation.add_css_class("error");grid.attach(validation,0,5,2,1)
     dialog.set_extra_child(grid);dialog.add_response("cancel","Cancel");dialog.add_response("save","Create" if create else "Apply")
+    if not create and not builtin:
+        editor.style_delete_button=Gtk.Button(label="Delete style",halign=Gtk.Align.END)
+        editor.style_delete_button.add_css_class("destructive-action")
+        editor.style_delete_button.connect("clicked",lambda _:dialog.response("delete"))
+        grid.attach(editor.style_delete_button,0,6,2,1)
     dialog.set_response_appearance("save",Adw.ResponseAppearance.SUGGESTED)
     dialog.set_default_response("save");dialog.set_close_response("cancel")
     def validate(*_):
@@ -324,6 +339,8 @@ def style_dialog(editor,create):
         else:args["oldName"]=current
         dialog.destroy();editor.style_dialog=None
         if answer=="save":editor.command("defineStyle",args)
+        elif answer=="delete" and not create and not builtin:
+            editor.command("deleteStyle",{"name":current,"documentId":document_id})
         else:editor.focus_document()
     dialog.connect("response",response);dialog.present()
 
