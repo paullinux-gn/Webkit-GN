@@ -1,0 +1,19 @@
+name: Editor checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  unit-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: webkit/package-lock.json
+      - run: npm ci --prefix webkit --no-audit --no-fund
+      - run: npm test --prefix webkit
+      - run: python3 -m unittest discover -s webkit/tests -v
+      - run: npm run build --prefix webkit
+      - run: git diff --exit-code -- webkit/editor.bundle.js
