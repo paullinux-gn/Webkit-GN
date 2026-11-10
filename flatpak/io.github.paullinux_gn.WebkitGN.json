@@ -10,7 +10,8 @@
     "--socket=wayland",
     "--socket=fallback-x11",
     "--device=dri",
-    "--socket=cups"
+    "--socket=cups",
+    "--env=LANGUAGE=en"
   ],
   "modules": [
     {

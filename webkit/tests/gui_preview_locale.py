@@ -36,15 +36,10 @@ try:
         if printer.is_virtual() and printer.accepts_pdf():printers.append(printer);return True
         return False
     Gtk.enumerate_printers(discovered,None,False);pump(lambda:bool(printers))
-    name=printers[0].get_name();assert name=='Afdrukken naar bestand',name
-    print('Confirmed Dutch virtual PDF printer: '+name,flush=True)
-    output=ROOT/'.runtime/preview-locale';output.mkdir(parents=True,exist_ok=True)
-    legacy=window.create_print_operation();settings=Gtk.PrintSettings();settings.set_printer('Print to File')
-    settings.set('output-uri',(output/'legacy.pdf').as_uri());settings.set('output-file-format','pdf')
-    legacy.set_print_settings(settings);failed=[];finished=[]
-    legacy.connect('failed',lambda _,error:failed.append(error.message));legacy.connect('finished',lambda _:finished.append(True))
-    legacy.print_();pump(lambda:bool(failed or finished));assert failed,'Old English printer name unexpectedly worked'
-    print('Reproduced original failure: '+failed[0],flush=True)
+    name=printers[0].get_name();assert name=='Print to File',name
+    assert os.environ['LANGUAGE']=='en' and os.environ['LC_TIME']=='nl_NL.UTF-8'
+    assert locale.setlocale(locale.LC_MESSAGES)=='C'
+    print('Confirmed English PDF printer with Dutch regional settings: '+name,flush=True)
     js('window.editor.loadHTML("<p>Preview without a physical printer.</p>")')
     window.print_document();pump(lambda:window.print_dialog is not None)
     preview=window.print_preview;preview.generate();pump(lambda:preview.pages>0 and not preview.busy)
@@ -67,6 +62,6 @@ try:
         window.print_dialog.response(Gtk.ResponseType.CANCEL);pump()
         assert preview.closed and not preview.discovery_timer
     finally:Gtk.enumerate_printers=original
-    print('PASS: Dutch PDF preview, physical-printer independence, PDF rendering, clean document and closing during discovery',flush=True)
+    print('PASS: English PDF preview with Dutch regional settings, physical-printer independence, PDF rendering, clean document and closing during discovery',flush=True)
 finally:
     window.discard_confirmed=True;window.close();prefs.cleanup()
