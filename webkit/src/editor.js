@@ -221,6 +221,7 @@ class DocumentTableView extends TableView {
 
 export function createEditor(mount, notify=()=>{}) {
   const search=createSearch();
+  let glassReference=null,glassOptions=null;
   let cleanDoc, revision=0, documentId=1, updateTimer, wordTimer, words=0;
   const styleSheet=document.createElement("style");document.head.append(styleSheet);
   const refreshStyles=()=>{styleSheet.textContent=styleRules(documentStyles(view.state.doc),".ProseMirror ");};
@@ -661,20 +662,35 @@ export function createEditor(mount, notify=()=>{}) {
     getState(){return {json:view.state.doc.toJSON(),revision,documentId,dirty:isDirty()};},
     getSummary(){return {revision,documentId,dirty:isDirty()};},
     setAppearance(options){
+      glassOptions=options;
+      if(!glassReference){
+        glassReference=document.createElement("div");glassReference.setAttribute("aria-hidden","true");
+        glassReference.style.cssText="position:fixed;left:0;top:0;width:100vw;height:0;visibility:hidden;pointer-events:none";
+        document.body.append(glassReference);
+      }
+      // GTK reports logical widget pixels. WebKit's CSS viewport may have a
+      // different scale (e.g. Flatpak font/DPI settings), and stable gutters can
+      // offset fixed-position elements. Calibrate both against the real viewport.
+      const reference=glassReference.getBoundingClientRect();
+      const scale=options.viewport?.width>0&&reference.width>0?options.viewport.width/reference.width:1;
       const theme=["light","dark","mixed"].includes(options.theme)?options.theme:"mixed";
       document.documentElement.dataset.theme=theme;
-      document.documentElement.style.setProperty("--glass-blur",`${options.blur_radius||0}px`);
+      document.documentElement.style.setProperty("--glass-blur",`${(options.blur_radius||0)/scale}px`);
       for(const name of ["header","toolbar","search","outline"]){
         const element=document.getElementById(`${name}-glass`);
         if(!element)continue;
         const bounds=options.geometry?.[name];
         element.style.display=(name==="header"||options.fallback)&&options.blur&&bounds?"block":"none";
         if(bounds){
-          for(const key of ["left","top","width","height"])element.style[key]=`${bounds[key]}px`;
+          element.style.left=`${bounds.left/scale-reference.left}px`;
+          element.style.top=`${bounds.top/scale-reference.top}px`;
+          element.style.width=`${bounds.width/scale}px`;
+          element.style.height=`${bounds.height/scale}px`;
+          if(name!=="header")element.style.borderRadius=`${(name==="toolbar"?20:18)/scale}px`;
           if(name==="header"){
             // An eased fade begins inside the header and continues into the document.
             // Zero slope at either end avoids a visible start/stop in the glass tint.
-            const fadeStart=Math.max(0,bounds.height-16),fadeLength=112;
+            const fadeStart=Math.max(0,bounds.height-16)/scale,fadeLength=112/scale;
             element.style.setProperty("--fade-start",`${fadeStart}px`);
             element.style.setProperty("--fade-length",`${fadeLength}px`);
             element.style.height=`${fadeStart+fadeLength}px`;
@@ -686,9 +702,11 @@ export function createEditor(mount, notify=()=>{}) {
       return true;
     },
     select(from,to=from){view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc,from,to)));view.focus();},
-    destroy(){view.dom.removeEventListener("load",imageLoaded,true);imageHandles.destroy();disposePrintLayout();clearTimeout(updateTimer);clearTimeout(wordTimer);styleSheet.remove();view.destroy();},
+    destroy(){window.removeEventListener("resize",refreshGlass);glassReference?.remove();view.dom.removeEventListener("load",imageLoaded,true);imageHandles.destroy();disposePrintLayout();clearTimeout(updateTimer);clearTimeout(wordTimer);styleSheet.remove();view.destroy();},
     view,
   };
+  const refreshGlass=()=>{if(glassOptions)api.setAppearance(glassOptions);};
+  window.addEventListener("resize",refreshGlass);
   recalculateWords();
   return api;
 }

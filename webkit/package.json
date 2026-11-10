@@ -1,7 +1,7 @@
 {
   "name": "webkit-gn-editor",
   "private": true,
-  "version": "0.26.0",
+  "version": "0.26.1",
   "type": "module",
   "scripts": {
     "build": "esbuild src/editor.js --bundle --minify --legal-comments=external --format=iife --target=safari16 --outfile=editor.bundle.js",

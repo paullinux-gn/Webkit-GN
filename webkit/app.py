@@ -91,7 +91,7 @@ class Editor(Adw.ApplicationWindow):
         header = Adw.HeaderBar(valign=Gtk.Align.START)
         self.header=header
         header.add_css_class("editor-header")
-        self.heading = Adw.WindowTitle(title="Untitled", subtitle="Prototype 0.26 · 125% view")
+        self.heading = Adw.WindowTitle(title="Untitled", subtitle="Prototype 0.26.1 · 125% view")
         header.set_title_widget(self.heading)
         self.file_actions={}
         files=Gio.Menu()
@@ -203,7 +203,7 @@ class Editor(Adw.ApplicationWindow):
 
     def apply_web_appearance(self):
         if self.state.get("ready") and not self.closed:
-            options={**self.appearance,"fallback":not self.native_blur,"geometry":self.glass_geometry}
+            options={**self.appearance,"fallback":not self.native_blur,"geometry":self.glass_geometry,"viewport":{"width":self.webview.get_width(),"height":self.webview.get_height()}}
             self.js("window.editor.setAppearance("+json.dumps(options)+")")
 
     def apply_appearance(self):

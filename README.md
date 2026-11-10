@@ -129,3 +129,5 @@ The app icon is GNOME's Adwaita document icon, credited to the
 [data/ADWAITA-LICENSE.txt](data/ADWAITA-LICENSE.txt).
 
 Flatpak packaging checks validate matching application IDs, the desktop entry and document-portal save behaviour. A full SDK/runtime build requires Flathub access; the GitHub Flatpak workflow performs that build and uploads the resulting bundle.
+
+Blur geometry is calibrated between GTK widget coordinates and the actual WebKit viewport, including page scale and scrollbar gutters. Version 0.26.1 fixes displaced toolbar backgrounds observed in Flatpak. Native regression tests check toolbar, search and outline backdrops at 100%, 110%, 125% and 150% WebKit zoom, without changing document zoom or dirty state.
