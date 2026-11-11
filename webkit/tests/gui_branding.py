@@ -27,6 +27,6 @@ try:
     assert window.get_icon_name()==app_id
     theme=Gtk.IconTheme.get_for_display(window.get_display())
     assert theme.has_icon(app_id)
-    print('PASS: Webkit-GN application ID, window title and bundled GNOME document icon',flush=True)
+    print('PASS: Webkit-GN application ID, window title and bundled Webkit-GN application icon',flush=True)
 finally:
     window.discard_confirmed=True;window.close();prefs.cleanup()

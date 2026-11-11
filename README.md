@@ -196,6 +196,10 @@ Flathub access; the GitHub workflow builds and uploads the bundle.
 ## Licence and credits
 
 See [LICENSE](LICENSE) and the [dependency notices](webkit/THIRD_PARTY.md).
-The app icon comes from GNOME's Adwaita icon set. Credit belongs to the
-[GNOME Project](https://www.gnome.org); its licence and attribution are included
-in [data/ADWAITA-LICENSE.txt](data/ADWAITA-LICENSE.txt).
+The application icon is custom artwork created for Webkit-GN: a blue rounded
+square with a white document and golden pen nib. The original PNG is embedded
+unchanged in the scalable SVG used by GTK and the Flatpak launcher.
+
+The monochrome symbolic fallback comes from GNOME's Adwaita icon set. Credit
+belongs to the [GNOME Project](https://www.gnome.org); its licence and attribution
+are included in [data/ADWAITA-LICENSE.txt](data/ADWAITA-LICENSE.txt).

@@ -30,7 +30,7 @@ in `licenses/Twinly-GPL-3.0.txt`. Matching icons use the same GNOME symbolic
 icon names as Twinly and are supplied by the installed desktop icon theme.
 Additional controls without a Twinly counterpart retain local symbolic SVGs.
 
-The application icon and symbolic variant are unmodified Adwaita `x-office-document` icons by the GNOME Project (https://www.gnome.org), from https://download.gnome.org/sources/adwaita-icon-theme/. Distributed under the applicable attribution/share-alike terms retained in `../data/ADWAITA-LICENSE.txt`.
+The monochrome symbolic application icon is an unmodified Adwaita `x-office-document` icon by the GNOME Project (https://www.gnome.org), from https://download.gnome.org/sources/adwaita-icon-theme/. Distributed under the applicable attribution/share-alike terms retained in `../data/ADWAITA-LICENSE.txt`.
 
 ## Flatpak PDF preview tools
 
