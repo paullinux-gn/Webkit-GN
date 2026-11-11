@@ -1,49 +1,114 @@
 # Webkit-GN
 
 A native GNOME word processor built with **GTK4, libadwaita, WebKitGTK 6 and
-ProseMirror**. The editor runs locally; it opens and saves self-contained HTML.
+ProseMirror**. Write on a continuous document surface, format your text with a
+floating toolbar, and save self-contained HTML files locally.
 
-## Run on CachyOS / Arch GNOME
+![Webkit-GN 0.30 on GNOME, showing a document with an embedded image and a floating formatting toolbar](docs/images/webkit-gn-desktop.png)
+
+## Features
+
+- A two-row floating toolbar, compact menus, and light, dark and mixed themes.
+- Optional blur with adjustable opacity and intensity for the header and toolbar.
+  Native menu blur requires GTK 4.24+ and GNOME 51+ on Wayland; menus remain
+  solid on older GTK versions or X11.
+- Body, Title and H1–H3 styles, plus custom styles you can create, rename and
+  delete. Deleting a custom style returns affected text to its built-in style;
+  undo restores it.
+- Font search, font sizes, emphasis, subscript, superscript, alignment and
+  paragraph line spacing, including 0.95.
+- Matching 60-colour text and highlight palettes. Rounded highlights choose
+  contrasting text automatically.
+- Bulleted and numbered lists, interactive checklists, links and horizontal rules.
+- Editable tables with header rows, borders, width and text-wrapping controls,
+  plus rounded, coloured text boxes.
+- Embedded images with proportional sizing, drag handles, a live size readout,
+  Escape cancellation and one-step undo.
+- One-, two- and three-column sections. A manual page break ends the current
+  column layout; following text returns to full width.
+- Search and replace, a live document outline, and undo/redo.
+- Document margins saved with HTML, native printing, and an embedded PDF preview
+  with page navigation, paper size and orientation controls.
+
+**Supported formats:** open and save `.html` and `.htm`; export PDF through the
+print dialog. DOCX and ODT conversion are not implemented. Editing uses a
+continuous surface rather than automatic page boundaries; print preview shows
+paginated output. A print-only column layout works around WebKit's CSS-column
+printing limitations.
+
+## Install and run
+
+### Flatpak bundle
+
+Download the latest successful build from
+[Actions → Flatpak bundle](https://github.com/paullinux-gn/Webkit-GN/actions/workflows/flatpak.yml).
+Open the completed run, download the **Webkit-GN-flatpak-x86_64** artifact, and
+extract the ZIP. From the extracted directory, install and launch:
+
+```sh
+flatpak install --user Webkit-GN.flatpak
+flatpak run io.github.paullinux_gn.WebkitGN
+```
+
+To replace an existing installation with a newer bundle:
+
+```sh
+flatpak install --user --reinstall Webkit-GN.flatpak
+```
+
+Fully close and reopen the app after updating. These bundles are distributed
+through GitHub Actions; the app is not submitted to Flathub by this workflow.
+
+### Run from source on CachyOS or Arch Linux
 
 ```sh
 sudo pacman -Syu --needed gtk4 libadwaita webkitgtk-6.0 python python-gobject poppler
+git clone https://github.com/paullinux-gn/Webkit-GN.git
+cd Webkit-GN
 ./run.sh
 ```
 
 Run inside your desktop session. The compiled JavaScript bundle is included;
-Node, npm and Rust are not required to run the app. The default is a 125% A4-width
-view, a light document/header and dark toolbar, with blur off. Interface settings
-are saved between launches. Older settings receive the previously introduced
-one-time default-theme migration.
+Node.js, npm and Rust are not required to run the app.
 
-## Features
+## Margins, zoom and printing
 
-- Two-row floating toolbar, compact themed menus and light/dark/mixed themes.
-  Optional header/toolbar blur, opacity and intensity controls.
-- Body, Title and H1–H3 styles, custom named styles, font search, font sizes,
-  emphasis, sub/superscript, alignment and line spacing (including 0.95).
-  Custom styles have delete icons in the dropdown and a Delete style button in
-  their editor. Affected paragraphs return to the matching built-in style; text,
-  direct formatting, alignment and spacing are retained. Ctrl+Z restores the style.
-- Matching 60-colour text/highlight palettes with consistent hue columns and
-  light-to-dark shades. Rounded highlights choose contrasting text automatically.
-- Bulleted, numbered and interactive checklists; links and horizontal rules.
-- Editable tables, header rows, border/width settings, wrapping, deletion and
-  commands to continue above/below a table. Rounded, coloured text boxes.
-- Embedded pictures with a proportional size dialog and direct drag handles.
-  Resizing has a live size readout, Escape cancellation and one-step undo.
-- One-, two- and three-column sections. A manual page break ends the column
-  setting; following text is full width until another layout is selected.
-- Search/replace and a live document-outline dropdown below the toolbar.
-- Undo/redo, native image chooser, A4 printing and a separate PDF preview with
-  page navigation, margins and orientation settings.
+Choose **Main menu → Page margins…** or press **Ctrl+Shift+M** to set the top,
+bottom, left and right margins in millimetres. Each margin accepts **0–90 mm**;
+the default is **20 mm**. Click **Apply**, then save the document to retain the
+settings. Margin changes support undo and redo. HTML exports preserve the
+settings and include browser print-margin rules.
 
-**File formats:** open/save HTML; PDF through the print dialog. DOCX/ODT conversion
-and automatic A4 page boundaries while editing are not implemented. The editor
-uses a continuous writing surface. Printing uses real paginated output, including
-a print-only column layout to work around WebKit's CSS-column printing behaviour.
+The native Print dialog starts with the document's margins. Its **Margins** tab
+lets you adjust them for that print job without changing the saved document.
+Choose **Update preview** after changing print settings, then check the preview
+before printing or saving a PDF.
 
-## Shortcuts
+The default editing view is **125% at A4 width**. Zoom scales the page and its
+margins together and does not change the printed margin values. Toolbar clearance
+sits outside the document, rather than adding to its top margin. Screen
+millimetres depend on your monitor and desktop scaling; use print preview to
+check placement on the physical page.
+
+Font size and line spacing affect wrapping, line height and page count, while
+the margin settings define the text area's boundary. Paragraph and heading
+spacing can add visible space between that boundary and the letters.
+
+## Appearance and language
+
+Open **Main menu → Interface…** to choose a theme and adjust translucency.
+The default appearance uses a light document and header with a dark toolbar;
+blur is off. Interface preferences are saved between launches.
+
+The app and its GTK/WebKit controls use **English**, while preserving regional
+date and number preferences. External desktop portals, including the system file
+picker, may use your desktop language.
+
+Native menu blur is available with the GNOME 51 Flatpak runtime on a compatible
+Wayland desktop. On older GTK versions or X11, the header and toolbar retain
+the document blur fallback. Turning blur off restores solid menu backgrounds.
+
+## Keyboard shortcuts
 
 | Action | Shortcut |
 |---|---|
@@ -51,51 +116,54 @@ a print-only column layout to work around WebKit's CSS-column printing behaviour
 | Save as | Ctrl+Shift+S |
 | Find / Replace | Ctrl+F / Ctrl+H |
 | Document outline | Ctrl+Shift+O |
-| Page break | Ctrl+Enter |
+| Page margins | Ctrl+Shift+M |
+| Insert page break | Ctrl+Enter |
 | Print / Print preview | Ctrl+P / Ctrl+Shift+P |
 | Leave table below / above | Alt+Enter / Alt+Shift+Enter |
 | Undo / Redo | Ctrl+Z / Ctrl+Shift+Z |
 
-Double-click a picture to open its size controls; click it once for drag handles.
-Use a table's properties handle or the toolbar table button to edit/delete it.
+Double-click an image to open its size controls, or click once to show drag
+handles. Use a table's properties handle or the toolbar table button to edit or
+delete it.
 
 ## Build a Flatpak
 
-On CachyOS / Arch:
+On CachyOS or Arch Linux:
 
 ```sh
 sudo pacman -S --needed flatpak flatpak-builder
 ./scripts/build-flatpak.sh
 ```
 
-This adds the Flathub remote for your user, downloads the GNOME 51 SDK/runtime,
-builds the pinned PDF-preview utilities and creates **`dist/Webkit-GN.flatpak`**.
-The first build downloads a substantial SDK; subsequent builds reuse its cache.
-The host desktop does not need to run GNOME 51 for ordinary editing. Native blur requires GNOME 51+ on Wayland. No Node or Rust build is needed:
-the manifest installs the checked-in production JavaScript bundle.
+The script adds the Flathub remote for your user, downloads the GNOME 51 SDK and
+runtime, builds pinned PDF-preview utilities, and creates
+**`dist/Webkit-GN.flatpak`**. The first build downloads a substantial SDK;
+subsequent builds reuse the cache. Ordinary editing does not require GNOME 51
+on the host desktop. The manifest installs the checked-in production JavaScript
+bundle, so no Node.js or Rust build is needed.
 
-Install and launch:
+Install the result:
 
 ```sh
 flatpak install --user dist/Webkit-GN.flatpak
 flatpak run io.github.paullinux_gn.WebkitGN
 ```
 
-`./scripts/build-flatpak.sh --install` builds and installs in one step.
-Alternatively, in GitHub open **Actions → Flatpak bundle → Run workflow**. Download
-`Webkit-GN-flatpak-x86_64` from the completed run's Artifacts and extract the ZIP
-before installing the `.flatpak` file. The workflow also runs after packaging or
-application changes on `main`; it does not submit the app to Flathub.
+Use `./scripts/build-flatpak.sh --install` to build and install in one step.
+Alternatively, run **Actions → Flatpak bundle → Run workflow** on GitHub. The
+workflow also runs after packaging or application changes on `main`.
 
-The sandbox uses native file portals, Wayland/X11, GPU rendering and the CUPS
+### Sandbox and file access
+
+The Flatpak uses native file portals, Wayland/X11, GPU rendering and the CUPS
 socket for printing. It has no blanket home-directory access or network grant.
-Use `.html`/`.htm` when saving in the portal. Embedded images are preserved;
+Use an `.html` or `.htm` extension when saving. Embedded images are preserved;
 relative images in neighbouring files may be inaccessible unless separately
-permitted. App settings use Flatpak's private configuration directory.
+permitted. Settings use Flatpak's private configuration directory.
 
 ## Development and checks
 
-Requires Node.js 22+ and Python 3 for development:
+Development requires Node.js 22+ and Python 3:
 
 ```sh
 npm ci --prefix webkit
@@ -105,40 +173,29 @@ npm run build --prefix webkit
 npm run benchmark --prefix webkit
 ```
 
-The production build is minified; readable source and dependency notices remain
-included. GitHub Actions runs unit tests and verifies the checked-in bundle is
-reproducible. GTK/WebKit are needed only for native tests and the application.
+The production bundle is minified; readable source and dependency notices are
+included. GitHub Actions runs unit tests and verifies that the checked-in bundle
+is reproducible. GTK and WebKitGTK are required for native tests and the app.
 
-Native regression tests need an X11 display, XTest, ImageMagick and Poppler:
+Native regression tests also need an X11 display, XTest, ImageMagick and Poppler:
 
 ```sh
 DISPLAY=:99 ./scripts/webkit-env.sh ./scripts/test-native.sh
 ```
 
-Use a disposable Xvfb display. Results and screenshots go into ignored `.runtime/`.
-The cloud runtime helpers support locally unpacked Debian libraries when needed;
-normal desktop installations use system packages. `scripts/setup-cloud.sh` is the
-optional cloud dependency setup, not part of the desktop launch path.
+Use a disposable Xvfb display. Results and screenshots go into the ignored
+`.runtime/` directory. Cloud helpers support locally unpacked Debian libraries;
+normal desktop installations use system packages. `scripts/setup-cloud.sh` is
+optional cloud setup, separate from the desktop launch path.
 
-The Python shell lives in `webkit/app.py`; editor modules are under `webkit/src/`.
-`webkit/tests/` contains editor, file-I/O, settings and native interaction tests.
-Performance measurements and cleanup notes are in [PERFORMANCE.md](PERFORMANCE.md).
+The Python application shell lives in `webkit/app.py`, editor modules in
+`webkit/src/`, and tests in `webkit/tests/`. See [PERFORMANCE.md](PERFORMANCE.md)
+for performance measurements and cleanup notes. Full Flatpak builds require
+Flathub access; the GitHub workflow builds and uploads the bundle.
 
-## Licences and icon
+## Licence and credits
 
-See [LICENSE](LICENSE) and [dependency notices](webkit/THIRD_PARTY.md).
-The app icon is GNOME's Adwaita document icon, credited to the
-[GNOME Project](https://www.gnome.org). Its licence and attribution are included in
-[data/ADWAITA-LICENSE.txt](data/ADWAITA-LICENSE.txt).
-
-Flatpak packaging checks validate matching application IDs, the desktop entry and document-portal save behaviour. A full SDK/runtime build requires Flathub access; the GitHub Flatpak workflow performs that build and uploads the resulting bundle.
-
-Blur geometry is calibrated between GTK widget coordinates and the actual WebKit viewport, including page scale and scrollbar gutters. Version 0.26.1 fixes displaced toolbar backgrounds observed in Flatpak. Native regression tests check toolbar, search and outline backdrops at 100%, 110%, 125% and 150% WebKit zoom, without changing document zoom or dirty state.
-
-Native blur follows Twinly's GTK 4.24+/Wayland capability check. The Flatpak now uses GNOME Platform/SDK 51 so popovers, context menus, dropdowns and the hamburger menu can use GTK backdrop blur with the selected tint and radius. On older GTK or X11, the existing document/toolbar blur fallback remains available; menus remain solid. Blur off always restores solid menu backgrounds.
-
-The application and its GTK/WebKit controls use English even on a Dutch-language desktop. Message language is selected before toolkit initialisation, without changing document contents or regional date/number preferences. External desktop portals (such as the system file picker) run outside the app and can retain the desktop's own language. Restart the app after updating to apply the interface-language change.
-
-Choose **Page margins…** in the main menu (Ctrl+Shift+M) to set top, bottom, left and right margins in millimetres (0–90 mm; default 20 mm). Apply saves them as part of the document, with undo support. HTML exports retain these values and browser print margins. The native Print dialog starts with the document margins; its **Margins** tab adjusts them for that print job. Use **Update preview** after changing print settings. Print-only adjustments do not change the saved document.
-
-The 125% editing view scales the page and all four margins together. Toolbar clearance sits outside the page, so it does not add to the top margin. Screen millimetres depend on monitor scaling; use print preview to check physical page placement. The editor remains a continuous document rather than a paginated view.
+See [LICENSE](LICENSE) and the [dependency notices](webkit/THIRD_PARTY.md).
+The app icon comes from GNOME's Adwaita icon set. Credit belongs to the
+[GNOME Project](https://www.gnome.org); its licence and attribution are included
+in [data/ADWAITA-LICENSE.txt](data/ADWAITA-LICENSE.txt).
