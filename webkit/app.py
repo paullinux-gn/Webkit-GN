@@ -95,7 +95,7 @@ class Editor(Adw.ApplicationWindow):
         header = Adw.HeaderBar(valign=Gtk.Align.START)
         self.header=header
         header.add_css_class("editor-header")
-        self.heading = Adw.WindowTitle(title="Untitled", subtitle="Prototype 0.29 · 125% view")
+        self.heading = Adw.WindowTitle(title="Untitled", subtitle="Prototype 0.30 · 125% view")
         header.set_title_widget(self.heading)
         self.file_actions={}
         files=Gio.Menu()
@@ -105,6 +105,7 @@ class Editor(Adw.ApplicationWindow):
                 ("save","Save",self.save,"<Primary>s"),
                 ("save-as","Save as…",lambda:self.file_dialog(True),"<Primary><Shift>s"),
                 ("page-break","Insert page break",lambda:self.command("pageBreak"),"<Primary>Return"),
+                ("margins","Page margins…",self.show_margins,"<Primary><Shift>m"),
                 ("print-preview","Print preview…",self.show_print_preview,"<Primary><Shift>p"),
                 ("print","Print…",self.print_document,"<Primary>p")]:
             action=Gio.SimpleAction.new(name,None)
@@ -450,11 +451,43 @@ class Editor(Adw.ApplicationWindow):
         if not self.file_busy:
             self.save_to(self.path) if self.path else self.file_dialog(True)
 
+    def margin_controls(self,values,changed=None):
+        box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=12,
+            margin_top=18,margin_bottom=18,margin_start=18,margin_end=18)
+        box.append(Gtk.Label(label="Margins in millimetres (0–90 mm)",xalign=0))
+        spins={}
+        for side in ("top","bottom","left","right"):
+            row=Gtk.Box(spacing=16)
+            row.append(Gtk.Label(label=side.capitalize(),hexpand=True,xalign=0))
+            spin=Gtk.SpinButton.new_with_range(0,90,0.5);spin.set_digits(1)
+            spin.set_value(values[side]);spins[side]=spin
+            spin.update_property([Gtk.AccessibleProperty.LABEL],[side.capitalize()+" margin in millimetres"])
+            row.append(spin);box.append(row)
+        if changed:
+            for spin in spins.values():
+                spin.connect("value-changed",lambda *_:changed({side:widget.get_value() for side,widget in spins.items()}))
+        return box,spins
+
+    def show_margins(self):
+        def loaded(values):
+            dialog=Gtk.Dialog(title="Page margins",transient_for=self,modal=True)
+            dialog.add_button("Cancel",Gtk.ResponseType.CANCEL)
+            dialog.add_button("Apply",Gtk.ResponseType.OK)
+            box,spins=self.margin_controls(values)
+            dialog.get_content_area().append(box)
+            def response(dialog,response):
+                if response==Gtk.ResponseType.OK:
+                    values={side:spin.get_value() for side,spin in spins.items()}
+                    self.js("window.editor.setMargins("+json.dumps(values)+")")
+                dialog.destroy();GLib.idle_add(self.focus_document)
+            dialog.connect("response",response);dialog.present()
+        self.js("window.editor.getMargins()",loaded)
+
     def create_print_operation(self):
         operation=WebKit.PrintOperation.new(self.webview)
         page=Gtk.PageSetup();page.set_paper_size(Gtk.PaperSize.new(Gtk.PAPER_NAME_A4))
         for side in ("top","bottom","left","right"):
-            getattr(page,"set_"+side+"_margin")(20,Gtk.Unit.MM)
+            getattr(page,"set_"+side+"_margin")(getattr(self,"document_margins",{}).get(side,20),Gtk.Unit.MM)
         self.configure_print_page(operation,page)
         operation.connect("failed",lambda _,error:self.status.set_label("Printing failed: "+error.message))
         operation.connect("finished",lambda _:self.status.set_label("Print operation finished"))
@@ -467,7 +500,15 @@ class Editor(Adw.ApplicationWindow):
         # WebKitGTK's print context uses 90 CSS pixels per physical inch.
         self.js("Object.assign(document.documentElement.dataset,"+json.dumps({"printWidth":str(max(1,width)*90/25.4),"printHeight":str(max(1,height)*90/25.4)})+")")
 
-    def print_document(self):
+    def print_document(self,preview=False):
+        if not self.state.get("ready"):return
+        def loaded(values):
+            self.document_margins=values
+            self.open_print_dialog()
+            if preview:self.select_preview_tab()
+        self.js("window.editor.getMargins()",loaded)
+
+    def open_print_dialog(self):
         if not self.state.get("ready"):return
         if getattr(self,"print_dialog",None):
             self.print_dialog.present();return
@@ -478,6 +519,24 @@ class Editor(Adw.ApplicationWindow):
         dialog.set_default_size(850,720)
         self.print_preview=PrintPreview(self,dialog)
         dialog.add_custom_tab(self.print_preview.box,Gtk.Label(label="Preview"))
+        syncing_margins=False
+        def changed(values):
+            if syncing_margins:return
+            page=dialog.get_page_setup().copy()
+            for side,value in values.items():getattr(page,"set_"+side+"_margin")(value,Gtk.Unit.MM)
+            dialog.set_page_setup(page)
+        margins,self.print_margin_spins=self.margin_controls(self.document_margins,changed)
+        dialog.add_custom_tab(margins,Gtk.Label(label="Margins"))
+        def sync_margins(*_):
+            nonlocal syncing_margins
+            syncing_margins=True
+            try:
+                page=dialog.get_page_setup()
+                for side,spin in self.print_margin_spins.items():
+                    value=getattr(page,"get_"+side+"_margin")(Gtk.Unit.MM)
+                    if abs(spin.get_value()-value)>0.05:spin.set_value(value)
+            finally:syncing_margins=False
+        dialog.connect("notify::page-setup",sync_margins)
         def response(dialog,response):
             if response==Gtk.ResponseType.OK:
                 self.print_operation=self.create_print_operation()
@@ -489,7 +548,9 @@ class Editor(Adw.ApplicationWindow):
         dialog.connect("response",response);dialog.present()
 
     def show_print_preview(self):
-        self.print_document()
+        self.print_document(preview=True)
+
+    def select_preview_tab(self):
         if not getattr(self,"print_dialog",None):return
         def descendants(widget):
             yield widget;child=widget.get_first_child()

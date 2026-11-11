@@ -605,3 +605,22 @@ test("style edits and deletion never mutate cached notifications or history snap
     api.exec('undo');assert.ok(Object.hasOwn(states.at(-1).styles,'Accent'));
   }finally{api.destroy();}
 });
+
+test("document margins persist, undo, affect layout and reset for ordinary HTML",()=>{
+  const api=editor();
+  try{
+    const margins={top:12.5,bottom:30,left:15,right:25};
+    api.setMargins(margins);
+    assert.deepEqual(api.getMargins(),margins);
+    assert.equal(api.getSummary().dirty,true);
+    const html=api.exportHTML().html;
+    assert.ok(html.includes('@page{margin:12.5mm 25mm 30mm 15mm}'));
+    assert.deepEqual(parseHTML(html).attrs.margins,margins);
+    api.exec('undo');assert.deepEqual(api.getMargins(),{top:20,bottom:20,left:20,right:20});
+    api.exec('redo');assert.deepEqual(api.getMargins(),margins);
+    api.loadHTML(html);assert.deepEqual(api.getMargins(),margins);assert.equal(api.getSummary().dirty,false);
+    api.loadHTML('<p>Imported</p>');assert.deepEqual(api.getMargins(),{top:20,bottom:20,left:20,right:20});
+    api.setMargins({top:-1,bottom:Infinity,left:100,right:'12'});
+    assert.deepEqual(api.getMargins(),{top:20,bottom:20,left:20,right:20});
+  }finally{api.destroy();}
+});

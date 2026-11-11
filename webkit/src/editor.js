@@ -52,7 +52,17 @@ function readLineSpacing(el){
   return Math.max(.95,Math.min(3,number));
 }
 const blockAttrs = el => ({lineSpacing:readLineSpacing(el),align: ["left","center","right","justify"].includes(el.style.textAlign) ? el.style.textAlign : "left"});
-let nodes = basic.spec.nodes.update("doc",{content:"block+",attrs:{styles:{default:DEFAULT_STYLES},columns:{default:1}}})
+export const DEFAULT_MARGINS=Object.freeze({top:20,bottom:20,left:20,right:20});
+export function normaliseMargins(value) {
+  const result={...DEFAULT_MARGINS};
+  for(const side of Object.keys(result)) {
+    const number=value?.[side];
+    if(typeof number==='number'&&Number.isFinite(number)&&number>=0&&number<=90)result[side]=Math.round(number*10)/10;
+  }
+  return result;
+}
+
+let nodes = basic.spec.nodes.update("doc",{content:"block+",attrs:{styles:{default:DEFAULT_STYLES},columns:{default:1},margins:{default:DEFAULT_MARGINS}}})
 .update("horizontal_rule",{...basic.spec.nodes.get("horizontal_rule"),parseDOM:[{tag:"hr:not([data-page-break])"}]}).update("paragraph", {
   content: "inline*", group: "block", attrs: {align: {default:"left"},styleName:{default:"Normal"},clear:{default:false},lineSpacing:{default:1.5}},
   parseDOM: [{tag:"p",getAttrs:el=>({...blockAttrs(el),styleName:el.dataset.style||"Normal",clear:el.style.clear==="both"})}, {tag:"div",getAttrs:blockAttrs}],
@@ -164,7 +174,9 @@ export function parseHTML(html, domDocument=document) {
   container.querySelectorAll('span[data-highlight][data-auto-contrast="true"]').forEach(el=>el.style.removeProperty("color"));
   let styles=DEFAULT_STYLES;
   try{styles=normaliseStyles(JSON.parse(container.dataset.editorStyles||"null"));}catch{/* Ordinary imported HTML uses the built-in styles. */}
-  const parsed=PMParser.fromSchema(schema).parse(container,{topNode:schema.topNodeType.create({styles}),preserveWhitespace:container.hasAttribute("data-editor-styles")?"full":false});
+  let margins=DEFAULT_MARGINS;
+  try{margins=normaliseMargins(JSON.parse(container.dataset.pageMargins||"null"));}catch{}
+  const parsed=PMParser.fromSchema(schema).parse(container,{topNode:schema.topNodeType.create({styles,margins}),preserveWhitespace:container.hasAttribute("data-editor-styles")?"full":false});
   const legacyColumns=Number(container.dataset.columns);
   if([2,3].includes(legacyColumns)&&!container.querySelector('[data-column-section]')){
     const children=[],first=[];let afterBreak=false;
@@ -181,14 +193,15 @@ function fragmentHTML(doc,domDocument=document) {
   return container.innerHTML;
 }
 export function serializeHTML(doc, domDocument=document) {
+  const margins=normaliseMargins(doc.attrs.margins);
   return '<!doctype html><html><head><meta charset="utf-8"><title>Document</title><style>' +
-    'body{max-width:794px;margin:2em auto;font-family:serif;line-height:1.5;padding:0 2em}' +
+    '@page{margin:'+margins.top+'mm '+margins.right+'mm '+margins.bottom+'mm '+margins.left+'mm}body{max-width:794px;margin:2em auto;font-family:serif;line-height:1.5;padding:0 2em}' +
     'img{max-width:100%;height:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #888;border-width:var(--table-border-width,1px);padding:6px}' +
     'ul[data-checklist]{list-style:none;padding-left:0}ul[data-checklist]>li{display:flex;gap:.5em}ul[data-checklist] .checklist-content{flex:1;min-width:0}' +
     '[data-textbox]{box-sizing:border-box;max-width:100%;border:1px solid #888;padding:16px;margin:16px 0;border-radius:12px;overflow-wrap:break-word;display:flow-root}' +
-    '[data-page-break]{column-span:all;-webkit-column-span:all;break-after:page}@media print{body{margin:0;max-width:none}[data-page-break]{display:block;border:0;margin:0;padding:0;height:0;break-after:page;page-break-after:always}}' +
+    '[data-page-break]{column-span:all;-webkit-column-span:all;break-after:page}@media print{body{margin:0;max-width:none;padding:0}[data-page-break]{display:block;border:0;margin:0;padding:0;height:0;break-after:page;page-break-after:always}}' +
     styleRules(documentStyles(doc)) +
-    '</style></head><body data-columns="'+doc.attrs.columns+'" data-editor-styles="'+escapeAttribute(JSON.stringify(documentStyles(doc)))+'">' + fragmentHTML(doc,domDocument) + '</body></html>';
+    '</style></head><body data-page-margins="'+escapeAttribute(JSON.stringify(margins))+'" data-columns="'+doc.attrs.columns+'" data-editor-styles="'+escapeAttribute(JSON.stringify(documentStyles(doc)))+'">' + fragmentHTML(doc,domDocument) + '</body></html>';
 }
 
 function markValue(state,type,attr) {
@@ -224,7 +237,10 @@ export function createEditor(mount, notify=()=>{}) {
   let glassReference=null,glassOptions=null;
   let cleanDoc, revision=0, documentId=1, updateTimer, wordTimer, words=0;
   const styleSheet=document.createElement("style");document.head.append(styleSheet);
-  const refreshStyles=()=>{styleSheet.textContent=styleRules(documentStyles(view.state.doc),".ProseMirror ");};
+  const refreshStyles=()=>{
+    const margins=normaliseMargins(view.state.doc.attrs.margins);
+    for(const [side,value] of Object.entries(margins))view.dom.style.setProperty('--margin-'+side,value+'mm');
+    styleSheet.textContent=styleRules(documentStyles(view.state.doc),".ProseMirror ");};
   const exports = new Map();
   let dirtyDoc,dirtyClean,dirtyValue;
   function isDirty(){
@@ -377,7 +393,7 @@ export function createEditor(mount, notify=()=>{}) {
       const oldStyles=view.state.doc.attrs.styles;
       view.updateState(view.state.apply(tr));
       imageHandles.update();
-      if(oldStyles!==view.state.doc.attrs.styles)refreshStyles();
+      if(oldStyles!==view.state.doc.attrs.styles||tr.docChanged)refreshStyles();
       if(tr.docChanged) {
         revision++;
         clearTimeout(wordTimer);
@@ -647,6 +663,11 @@ export function createEditor(mount, notify=()=>{}) {
   }
   const api={
     exec:execute,
+    getMargins(){return normaliseMargins(view.state.doc.attrs.margins);},
+    setMargins(value){
+      view.dispatch(view.state.tr.setDocAttribute('margins',normaliseMargins(value)));
+      return normaliseMargins(view.state.doc.attrs.margins);
+    },
     find(query,caseSensitive=false){const result=search.find(view,query,caseSensitive);send();return result;},
     findNext(direction=1){const result=search.next(view,direction);send();return result;},
     replaceMatch(replacement,all=false){const result=search.replace(view,replacement,all);send();return result;},
