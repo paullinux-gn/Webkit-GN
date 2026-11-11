@@ -1,33 +1,34 @@
-import locale,os,sys,unittest
+import locale
+import os
+import sys
+import unittest
 from pathlib import Path
 from unittest.mock import patch
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from ui_language import use_english_ui
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ui_language import use_desktop_language
+
 
 class LanguageTests(unittest.TestCase):
-    def setUp(self):
-        self.messages=locale.setlocale(locale.LC_MESSAGES)
-        self.numeric=locale.setlocale(locale.LC_NUMERIC)
-        self.time=locale.setlocale(locale.LC_TIME)
+    def test_desktop_language_and_regional_overrides_are_preserved(self):
+        preferences = {'LANG': 'nl_BE.UTF-8', 'LANGUAGE': 'nl:en',
+                       'LC_MESSAGES': 'nl_NL.UTF-8', 'LC_TIME': 'de_DE.UTF-8',
+                       'LC_ALL': 'nl_BE.UTF-8'}
+        with patch.dict(os.environ, preferences, clear=True):
+            with patch('ui_language.locale.setlocale') as apply:
+                use_desktop_language()
+                apply.assert_called_once_with(locale.LC_ALL, '')
+            self.assertEqual(dict(os.environ), preferences)
 
-    def tearDown(self):locale.setlocale(locale.LC_MESSAGES,self.messages)
+    def test_missing_locale_does_not_block_startup_or_change_environment(self):
+        preferences = {'LANG': 'unavailable.UTF-8', 'LANGUAGE': 'nl:en'}
+        with patch.dict(os.environ, preferences, clear=True):
+            with patch('ui_language.locale.setlocale', side_effect=locale.Error):
+                use_desktop_language()
+            self.assertEqual(dict(os.environ), preferences)
 
-    def test_lc_all_is_preserved_for_formats_but_not_ui_messages(self):
-        with patch.dict(os.environ,{'LC_ALL':'nl_NL.UTF-8','LANGUAGE':'nl','LC_TIME':'de_DE.UTF-8'}):
-            use_english_ui()
-            self.assertNotIn('LC_ALL',os.environ)
-            self.assertEqual(os.environ['LANGUAGE'],'en')
-            self.assertEqual(os.environ['LC_MESSAGES'],'C')
-            for category in ('LC_TIME','LC_NUMERIC','LC_MONETARY','LC_CTYPE','LC_PAPER'):
-                self.assertEqual(os.environ[category],'nl_NL.UTF-8')
-            self.assertEqual(locale.setlocale(locale.LC_MESSAGES),'C')
-            self.assertEqual(locale.setlocale(locale.LC_NUMERIC),self.numeric)
-            self.assertEqual(locale.setlocale(locale.LC_TIME),self.time)
-
-    def test_individual_regional_preferences_remain_intact(self):
-        with patch.dict(os.environ,{'LANG':'nl_NL.UTF-8','LC_TIME':'de_DE.UTF-8','LC_NUMERIC':'nl_NL.UTF-8'},clear=True):
-            use_english_ui()
-            self.assertEqual(os.environ['LANG'],'nl_NL.UTF-8')
-            self.assertEqual(os.environ['LC_TIME'],'de_DE.UTF-8')
-            self.assertEqual(os.environ['LC_NUMERIC'],'nl_NL.UTF-8')
-            self.assertEqual(os.environ['LANGUAGE'],'en')
+    def test_no_language_override_is_invented(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with patch('ui_language.locale.setlocale'):
+                use_desktop_language()
+            self.assertEqual(dict(os.environ), {})

@@ -25,9 +25,9 @@ def js(text):
     result=[];window.js(text,result.append);pump(lambda:bool(result));return result[0]
 try:
     pump(lambda:window.state.get('ready'))
-    assert os.environ['LANGUAGE']=='en'
+    assert os.environ['LANGUAGE']=='nl'
     assert locale.setlocale(locale.LC_TIME).startswith('nl_NL')
-    assert locale.setlocale(locale.LC_MESSAGES)=='C'
+    assert locale.setlocale(locale.LC_MESSAGES).startswith('nl_NL')
     observed=[]
     def check_menu(view,menu,*args):
         actions=[item.get_stock_action() for item in menu.get_items()]
@@ -59,8 +59,8 @@ try:
             return bool(found)
         pump(visible_menu)
         labels=[w.get_text().replace('_','') for w in descendants(found[0]) if isinstance(w,Gtk.Label)]
-        assert 'Paste' in labels and 'Select All' in labels,labels
-        assert not any(text in labels for text in ('Plakken','Kopiëren','Alles selecteren')),labels
+        assert 'Plakken' in labels and 'Alles selecteren' in labels,labels
+        assert not any(text in labels for text in ('Paste','Copy','Select All')),labels
         content=next(w for w in descendants(found[0]) if w.get_css_name()=='contents')
         c=content.get_color();actual=tuple(round(v*255) for v in (c.red,c.green,c.blue))
         assert actual==expected,(theme,actual)
@@ -70,10 +70,10 @@ try:
     x11.XCloseDisplay(display)
     window.print_document();pump(lambda:window.print_dialog is not None)
     labels=[w.get_text().replace('_','') for w in descendants(window.print_dialog) if isinstance(w,Gtk.Label)]
-    assert 'General' in labels and 'Page Setup' in labels,labels
-    assert not any(text in labels for text in ('Algemeen','Pagina-instelling','Afdrukken')),labels
+    assert 'Algemeen' in labels and 'Pagina-instelling' in labels,labels
+    assert not any(text in labels for text in ('General','Page Setup','Print')),labels
     window.print_dialog.response(Gtk.ResponseType.CANCEL);pump()
 
-    print('PASS: GTK/WebKit context menus and print tabs are English under Dutch regional settings in all themes',flush=True)
+    print('PASS: GTK/WebKit context menus and print tabs follow Dutch desktop-language settings in all themes',flush=True)
 finally:
     window.discard_confirmed=True;window.close();prefs.cleanup()

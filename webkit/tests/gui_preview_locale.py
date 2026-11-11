@@ -36,10 +36,10 @@ try:
         if printer.is_virtual() and printer.accepts_pdf():printers.append(printer);return True
         return False
     Gtk.enumerate_printers(discovered,None,False);pump(lambda:bool(printers))
-    name=printers[0].get_name();assert name=='Print to File',name
-    assert os.environ['LANGUAGE']=='en' and os.environ['LC_TIME']=='nl_NL.UTF-8'
-    assert locale.setlocale(locale.LC_MESSAGES)=='C'
-    print('Confirmed English PDF printer with Dutch regional settings: '+name,flush=True)
+    name=printers[0].get_name();assert name=='Afdrukken naar bestand',name
+    assert os.environ['LANGUAGE']=='nl' and os.environ['LC_ALL']=='nl_NL.UTF-8'
+    assert locale.setlocale(locale.LC_MESSAGES).startswith('nl_NL')
+    print('Confirmed Dutch PDF printer with desktop-language detection: '+name,flush=True)
     js('window.editor.loadHTML("<p>Preview without a physical printer.</p>")')
     window.print_document();pump(lambda:window.print_dialog is not None)
     preview=window.print_preview;preview.generate();pump(lambda:preview.pages>0 and not preview.busy)
@@ -62,6 +62,6 @@ try:
         window.print_dialog.response(Gtk.ResponseType.CANCEL);pump()
         assert preview.closed and not preview.discovery_timer
     finally:Gtk.enumerate_printers=original
-    print('PASS: English PDF preview with Dutch regional settings, physical-printer independence, PDF rendering, clean document and closing during discovery',flush=True)
+    print('PASS: Dutch PDF preview with desktop-language detection, physical-printer independence, PDF rendering, clean document and closing during discovery',flush=True)
 finally:
     window.discard_confirmed=True;window.close();prefs.cleanup()

@@ -7,8 +7,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 
 # Initialise before GTK/WebKit load their translation catalogues.
-from ui_language import use_english_ui
-use_english_ui()
+from ui_language import use_desktop_language
+use_desktop_language()
 
 import gi
 gi.require_version("Gtk", "4.0")

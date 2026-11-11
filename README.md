@@ -100,9 +100,12 @@ Open **Main menu → Interface…** to choose a theme and adjust translucency.
 The default appearance uses a light document and header with a dark toolbar;
 blur is off. Interface preferences are saved between launches.
 
-The app and its GTK/WebKit controls use **English**, while preserving regional
-date and number preferences. External desktop portals, including the system file
-picker, may use your desktop language.
+The app automatically follows your desktop language for GTK and WebKit controls,
+including standard context menus and print controls. Regional date and number
+preferences are preserved, and no in-app language selector is needed. The app's
+own labels remain **English** for now; additional app-specific translations are
+not yet included. External file pickers follow the desktop portal's language.
+Fully close and reopen the app after updating to apply this change.
 
 Native menu blur is available with the GNOME 51 Flatpak runtime on a compatible
 Wayland desktop. On older GTK versions or X11, the header and toolbar retain
