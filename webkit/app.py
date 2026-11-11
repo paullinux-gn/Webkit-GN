@@ -25,6 +25,7 @@ from ui_surfaces import surface_css,compact_dialog
 from toolbar import image_size_dialog,build_text_toolbar,build_action_toolbar,sync_text_toolbar,table_dialog,HIGHLIGHT_COLOURS
 
 ROOT = Path(__file__).resolve().parent
+VERSION = json.loads((ROOT/"package.json").read_text(encoding="utf-8"))["version"]
 SWATCH_CSS="\n".join(f".floating-tools button.color-swatch.swatch-{index} {{ background:{value}; }}" for index,(_,value) in enumerate(HIGHLIGHT_COLOURS))
 
 
@@ -72,6 +73,7 @@ class Editor(Adw.ApplicationWindow):
         self.appearance=self.appearance_store.load()
         self.preference_timer=None
         self.interface_window=None
+        self.about_window=None
         self.glass_geometry={}
         self.frame_clock=None
         self.frame_handler=None
@@ -95,7 +97,7 @@ class Editor(Adw.ApplicationWindow):
         header = Adw.HeaderBar(valign=Gtk.Align.START)
         self.header=header
         header.add_css_class("editor-header")
-        self.heading = Adw.WindowTitle(title="Untitled", subtitle="Prototype 0.30 · 125% view")
+        self.heading = Adw.WindowTitle(title="Untitled", subtitle=f"Prototype {VERSION.removesuffix('.0')} · 125% view")
         header.set_title_widget(self.heading)
         self.file_actions={}
         files=Gio.Menu()
@@ -131,6 +133,11 @@ class Editor(Adw.ApplicationWindow):
         menu.append_section(None,search_menu)
         interface=Gio.Menu();interface.append("Interface…","win.interface")
         menu.append_section(None,interface)
+        about_action=Gio.SimpleAction.new("about",None)
+        about_action.connect("activate",lambda *_:self.show_about())
+        self.add_action(about_action)
+        about=Gio.Menu();about.append("About Webkit-GN","win.about")
+        menu.append_section(None,about)
         self.menu_button=Gtk.MenuButton(icon_name="open-menu-symbolic",tooltip_text="Main menu")
         self.menu_button.set_menu_model(menu)
         header.pack_end(self.menu_button)
@@ -287,6 +294,31 @@ class Editor(Adw.ApplicationWindow):
         try:self.appearance_store.save(self.appearance)
         except OSError:self.status.set_label("Could not save interface preferences.")
         return False
+
+    def show_about(self):
+        if self.about_window:
+            self.about_window.present();return
+        window=Adw.AboutWindow(
+            transient_for=self,modal=True,
+            application_name="Webkit-GN",
+            application_icon="io.github.paullinux_gn.WebkitGN",
+            developer_name="Paullinux",version=VERSION,
+            comments="A native GNOME word processor. Write and format documents locally, save self-contained HTML, and print with a paginated PDF preview.",
+            website="https://github.com/paullinux-gn/Webkit-GN",
+            issue_url="https://github.com/paullinux-gn/Webkit-GN/issues",
+            copyright="Copyright © 2026 Paullinux",
+            license_type=Gtk.License.GPL_3_0)
+        window.set_developers(["Paullinux https://github.com/paullinux-gn"])
+        window.add_credit_section("Built with",["GTK4 and libadwaita","WebKitGTK and PyGObject","ProseMirror","Poppler (PDF preview)"])
+        window.add_credit_section("Design and artwork",["Custom Webkit-GN application icon","GNOME Project — Adwaita symbolic icon","Twinly — toolbar styling"])
+        window.add_link("User guide","https://github.com/paullinux-gn/Webkit-GN#readme")
+        window.add_link("Third-party licences","https://github.com/paullinux-gn/Webkit-GN/blob/main/webkit/THIRD_PARTY.md")
+        def closed(*_):
+            self.about_window=None
+            GLib.idle_add(self.focus_document)
+            return False
+        window.connect("close-request",closed)
+        self.about_window=window;window.present()
 
     def show_interface(self):
         if self.interface_window:
@@ -686,6 +718,7 @@ class Editor(Adw.ApplicationWindow):
         if self.preference_timer:
             GLib.source_remove(self.preference_timer);self.save_appearance()
         if self.interface_window:self.interface_window.destroy()
+        if self.about_window:self.about_window.destroy();self.about_window=None
         if self.image_chooser:self.image_chooser.destroy();self.image_chooser=None
         if getattr(self,"table_window",None):self.table_window.destroy()
         if getattr(self,"textbox_window",None):self.textbox_window.destroy()

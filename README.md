@@ -108,6 +108,9 @@ Native menu blur is available with the GNOME 51 Flatpak runtime on a compatible
 Wayland desktop. On older GTK versions or X11, the header and toolbar retain
 the document blur fallback. Turning blur off restores solid menu backgrounds.
 
+Choose **Main menu → About Webkit-GN** for the application version, project and
+support links, GPL licence, and credits.
+
 ## Keyboard shortcuts
 
 | Action | Shortcut |
